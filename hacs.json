@@ -1,0 +1,8 @@
+{
+  "name": "Kumo Cloud",
+  "content_in_root": false,
+  "domains": ["kumo_cloud"],
+  "homeassistant": "2023.8.0",
+  "country": ["US"],
+  "render_readme": true
+}

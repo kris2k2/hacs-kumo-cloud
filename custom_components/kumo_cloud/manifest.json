@@ -1,0 +1,14 @@
+{
+  "domain": "kumo_cloud",
+  "name": "Kumo Cloud",
+  "version": "0.0.1",
+  "codeowners": ["@kumo-cloud-maintainers"],
+  "config_flow": true,
+  "documentation": "https://github.com/your-github-username/hacs-kumo-cloud",
+  "issue_tracker": "https://github.com/your-github-username/hacs-kumo-cloud/issues",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "requirements": [],
+  "dependencies": [],
+  "loggers": ["custom_components.kumo_cloud"]
+}
