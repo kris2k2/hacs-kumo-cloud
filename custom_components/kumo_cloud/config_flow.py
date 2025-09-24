@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Type
 
 import voluptuous as vol
 
@@ -48,24 +48,46 @@ async def _async_step_user(
     )
 
 
+class _BaseConfigFlow(config_entries.ConfigFlow):
+    """Shared implementation for the Kumo Cloud config flow."""
+
+    VERSION = 1
+    domain = DOMAIN
+    async_step_user = _async_step_user
+
+
 try:
-    class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    class ConfigFlow(_BaseConfigFlow, domain=DOMAIN):
         """Handle a config flow for Kumo Cloud."""
 
-        VERSION = 1
-        domain = DOMAIN
-        async_step_user = _async_step_user
+        pass
 except TypeError:
-    class ConfigFlow(config_entries.ConfigFlow):
+    class ConfigFlow(_BaseConfigFlow):
         """Handle a config flow for Kumo Cloud."""
 
-        VERSION = 1
-        domain = DOMAIN
-        async_step_user = _async_step_user
+        pass
 
-    if hasattr(config_entries, "HANDLERS"):
+
+def _register_legacy_flow_handler(flow_cls: Type[config_entries.ConfigFlow]) -> None:
+    """Register the flow handler on Home Assistant cores without auto discovery."""
+
+    handlers = getattr(config_entries, "HANDLERS", None)
+    if handlers is None:
+        return
+
+    register = getattr(handlers, "register", None)
+    if callable(register):
         try:
-            config_entries.HANDLERS.register(DOMAIN)(ConfigFlow)
+            register(DOMAIN)(flow_cls)
         except ValueError:
             # Handler already registered on this core version.
             pass
+        return
+
+    try:
+        handlers[DOMAIN] = flow_cls
+    except Exception:  # pragma: no cover - defensive fallback for legacy registries
+        pass
+
+
+_register_legacy_flow_handler(ConfigFlow)
