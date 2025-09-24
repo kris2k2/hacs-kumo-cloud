@@ -10,5 +10,10 @@
         }
       }
     }
+  },
+  "error": {
+    "cannot_connect": "Unable to connect to Kumo Cloud. Please try again.",
+    "invalid_auth": "The provided credentials are invalid.",
+    "unknown": "Unexpected error during setup. Please try again."
   }
 }
