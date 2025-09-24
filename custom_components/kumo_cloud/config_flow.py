@@ -63,9 +63,9 @@ except TypeError:
         domain = DOMAIN
         async_step_user = _async_step_user
 
-if hasattr(config_entries, "HANDLERS"):
-    try:
-        config_entries.HANDLERS.register(DOMAIN)(ConfigFlow)
-    except ValueError:
-        # Handler already registered on this core version.
-        pass
+    if hasattr(config_entries, "HANDLERS"):
+        try:
+            config_entries.HANDLERS.register(DOMAIN)(ConfigFlow)
+        except ValueError:
+            # Handler already registered on this core version.
+            pass
