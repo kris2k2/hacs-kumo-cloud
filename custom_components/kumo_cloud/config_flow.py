@@ -23,10 +23,11 @@ DATA_SCHEMA = vol.Schema(
 )
 
 
-class KumoCloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class ConfigFlow(config_entries.ConfigFlow):
     """Handle a config flow for Kumo Cloud."""
 
     VERSION = 1
+    domain = DOMAIN
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """Handle the initial step where the user enters credentials."""
@@ -49,3 +50,10 @@ class KumoCloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=DATA_SCHEMA,
             errors=errors,
         )
+
+if hasattr(config_entries, "HANDLERS"):
+    try:
+        config_entries.HANDLERS.register(DOMAIN)(ConfigFlow)
+    except ValueError:
+        # Handler already registered on this core version.
+        pass
