@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import voluptuous as vol
 
 from homeassistant import config_entries
-from homeassistant.data_entry_flow import FlowResult
 
 from .const import DOMAIN
+
+if TYPE_CHECKING:
+    from homeassistant.data_entry_flow import FlowResult
+else:  # pragma: no cover - typing fallback for older Home Assistant versions
+    FlowResult = Any
 
 DATA_SCHEMA = vol.Schema(
     {
@@ -19,29 +23,49 @@ DATA_SCHEMA = vol.Schema(
 )
 
 
-class KumoCloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Kumo Cloud."""
+async def _async_step_user(
+    self, user_input: dict[str, Any] | None = None
+) -> FlowResult:
+    """Handle the initial step where the user enters credentials."""
+    errors: dict[str, str] = {}
 
-    VERSION = 1
+    if user_input is not None:
+        await self.async_set_unique_id(user_input["username"].lower())
+        self._abort_if_unique_id_configured()
 
-    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
-        """Handle the initial step where the user enters credentials."""
-        errors: dict[str, str] = {}
-
-        if user_input is not None:
-            await self.async_set_unique_id(user_input["username"].lower())
-            self._abort_if_unique_id_configured()
-
-            return self.async_create_entry(
-                title=user_input["username"],
-                data={
-                    "username": user_input["username"],
-                    "password": user_input["password"],
-                },
-            )
-
-        return self.async_show_form(
-            step_id="user",
-            data_schema=DATA_SCHEMA,
-            errors=errors,
+        return self.async_create_entry(
+            title=user_input["username"],
+            data={
+                "username": user_input["username"],
+                "password": user_input["password"],
+            },
         )
+
+    return self.async_show_form(
+        step_id="user",
+        data_schema=DATA_SCHEMA,
+        errors=errors,
+    )
+
+
+try:
+    class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+        """Handle a config flow for Kumo Cloud."""
+
+        VERSION = 1
+        domain = DOMAIN
+        async_step_user = _async_step_user
+except TypeError:
+    class ConfigFlow(config_entries.ConfigFlow):
+        """Handle a config flow for Kumo Cloud."""
+
+        VERSION = 1
+        domain = DOMAIN
+        async_step_user = _async_step_user
+
+if hasattr(config_entries, "HANDLERS"):
+    try:
+        config_entries.HANDLERS.register(DOMAIN)(ConfigFlow)
+    except ValueError:
+        # Handler already registered on this core version.
+        pass
