@@ -2,52 +2,21 @@
 
 from __future__ import annotations
 
-import importlib
-from types import ModuleType
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any
+
+import voluptuous as vol
 
 from homeassistant import config_entries
+from homeassistant.data_entry_flow import FlowResult
 
 from .const import DOMAIN
 
-if TYPE_CHECKING:
-    from homeassistant.data_entry_flow import FlowResult
-    from voluptuous import Schema as VolSchema
-else:  # pragma: no cover - typing fallback for older Home Assistant versions
-    FlowResult = Any
-    VolSchema = Any
 
-
-class ConfigFlow(config_entries.ConfigFlow):
+class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Kumo Cloud."""
 
     VERSION = 1
     domain = DOMAIN
-
-    def __init__(self) -> None:
-        """Initialize the config flow."""
-
-        self._voluptuous: ModuleType | None = None
-
-    async def _async_get_data_schema(self) -> VolSchema:
-        """Return the data schema, importing voluptuous lazily."""
-
-        if self._voluptuous is None:
-            self._voluptuous = cast(
-                ModuleType,
-                await self.hass.async_add_executor_job(
-                    importlib.import_module, "voluptuous"
-                ),
-            )
-
-        vol = self._voluptuous
-
-        return vol.Schema(
-            {
-                vol.Required("username"): str,
-                vol.Required("password"): str,
-            }
-        )
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None) -> FlowResult:
         """Handle the initial step where the user enters credentials."""
@@ -65,17 +34,13 @@ class ConfigFlow(config_entries.ConfigFlow):
                 },
             )
 
-        data_schema = await self._async_get_data_schema()
-
         return self.async_show_form(
             step_id="user",
-            data_schema=data_schema,
+            data_schema=vol.Schema(
+                {
+                    vol.Required("username"): str,
+                    vol.Required("password"): str,
+                }
+            ),
             errors=errors,
         )
-
-if hasattr(config_entries, "HANDLERS"):
-    try:
-        config_entries.HANDLERS.register(DOMAIN)(ConfigFlow)
-    except ValueError:
-        # Handler already registered on this core version.
-        pass
